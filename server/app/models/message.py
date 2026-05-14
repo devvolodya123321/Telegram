@@ -15,6 +15,7 @@ class Chat(Base):
     description = Column(Text, nullable=False, default="")
     photo_path = Column(String(512), nullable=True)
     creator_id = Column(BigInteger, nullable=True)
+    pinned_message_id = Column(BigInteger, nullable=True)
     created_at = Column(Integer, default=lambda: int(time.time()))
 
 
