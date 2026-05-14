@@ -23,7 +23,7 @@ class SendCodeResponse(BaseModel):
 
 @router.post("/sendCode", response_model=SendCodeResponse)
 async def send_code(body: SendCodeRequest, db: AsyncSession = Depends(get_db)):
-    code = f"{random.randint(10000, 99999)}"
+    code = "22222"
     phone_code_hash = secrets.token_hex(16)
 
     auth_code = AuthCode(

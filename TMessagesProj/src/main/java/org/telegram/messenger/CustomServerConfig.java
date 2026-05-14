@@ -1,43 +1,34 @@
 /*
  * Custom Messenger Server configuration.
  *
- * When USE_CUSTOM_SERVER is true the client will route its API calls
- * through the Python server instead of Telegram's MTProto datacenters.
- *
- * Set CUSTOM_SERVER_URL to the base URL of your deployed server
- * (for example "https://my-messenger.example.com" or
- * "http://192.168.1.100:8443" for local development).
+ * The client routes ALL API calls through the custom Python server.
+ * Telegram's MTProto datacenters are not used at all.
+ * No API ID or API hash is required — authentication is handled
+ * entirely by the custom server.
  */
 package org.telegram.messenger;
 
 public class CustomServerConfig {
 
     /**
-     * Master switch: set to {@code true} to redirect all API traffic
-     * to the custom Python server defined by {@link #CUSTOM_SERVER_URL}.
+     * Master switch — always enabled for our custom messenger.
      */
-    public static boolean USE_CUSTOM_SERVER = false;
+    public static boolean USE_CUSTOM_SERVER = true;
 
     /**
      * Base URL of the custom messenger server (no trailing slash).
-     * Examples:
-     *   "http://10.0.2.2:8443"          — Android emulator → host machine
-     *   "http://192.168.1.100:8443"      — physical device on the same LAN
-     *   "https://messenger.example.com"  — production deployment
      */
-    public static String CUSTOM_SERVER_URL = "http://10.0.2.2:8443";
+    public static String CUSTOM_SERVER_URL = "http://45.90.99.234:8443";
 
     /**
      * WebSocket URL for real-time updates.
-     * Derived automatically from {@link #CUSTOM_SERVER_URL} but can
-     * be overridden if the WS endpoint is hosted separately.
      */
     public static String getWebSocketUrl() {
         String base = CUSTOM_SERVER_URL;
         if (base.startsWith("https://")) {
-            return "wss://" + base.substring(8) + "/api/updates/ws";
+            return "wss://" + base.substring(8) + "/ws/updates";
         }
-        return "ws://" + base.substring(7) + "/api/updates/ws";
+        return "ws://" + base.substring(7) + "/ws/updates";
     }
 
     /**
@@ -45,6 +36,12 @@ public class CustomServerConfig {
      * Sent as {@code Authorization: Bearer <token>} on every request.
      */
     public static String AUTH_TOKEN = null;
+
+    /**
+     * The verification code is always "22222" on our server.
+     * The client can auto-fill or display this to the user.
+     */
+    public static final String DEFAULT_CODE = "22222";
 
     /**
      * Convenience: full API URL for a given endpoint path.

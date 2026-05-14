@@ -18,76 +18,54 @@ from app.database import init_db
 
 # ── Karatelishak handlers ─────────────────────────────────────────────────
 from app.Karatelishak import (
-    sendCode,
-    signIn,
-    signUp,
-    logOut,
-    setPassword,
-    checkPassword,
-    deleteAccount,
-    getMe,
-    getUser,
-    getUsers,
-    updateProfile,
-    updateUsername,
-    setProfilePhoto,
-    deleteProfilePhoto,
-    getProfilePhotos,
-    setPrivacy,
-    getPrivacy,
-    importContacts,
-    getContacts,
-    searchContacts,
-    deleteContacts,
-    blockUser,
-    unblockUser,
-    getBlocked,
-    createChat,
-    createChannel,
-    editTitle,
-    editDescription,
-    setChatPhoto,
-    addUser,
-    deleteUser,
-    getFullChat,
-    getMembers,
-    leaveChat,
-    startPrivate,
-    joinChat,
-    pinMessage,
-    unpinMessage,
-    sendMessage,
-    getHistory,
-    getDialogs,
-    readHistory,
-    deleteMessages,
-    editMessage,
-    forwardMessages,
-    searchMessages,
-    getPinnedMessages,
-    requestCall,
-    acceptCall,
-    discardCall,
-    setCallRating,
-    getCallHistory,
-    createStickerSet,
-    addStickerToSet,
-    getStickerSets,
-    removeStickerSet,
-    sendSticker,
-    sendReaction,
-    getReactions,
-    postStory,
-    getStories,
-    deleteStory,
-    viewStory,
-    setNotificationSettings,
-    getNotificationSettings,
-    muteChat,
-    unmuteChat,
-    uploadFile,
-    downloadFile,
-    sendMedia,
+    # Auth
+    sendCode, signIn, signUp, logOut, setPassword, checkPassword, deleteAccount,
+    getPasswordHint, resetPassword,
+    # Users / Profile
+    getMe, getUser, getUsers, updateProfile, updateUsername,
+    setProfilePhoto, deleteProfilePhoto, getProfilePhotos, setPrivacy, getPrivacy,
+    # Contacts
+    importContacts, getContacts, searchContacts, deleteContacts, blockUser, unblockUser, getBlocked,
+    # Chats
+    createChat, createChannel, editTitle, editDescription, setChatPhoto,
+    addUser, deleteUser, getFullChat, getMembers, leaveChat, startPrivate, joinChat,
+    pinMessage, unpinMessage,
+    # Messages
+    sendMessage, getHistory, getDialogs, readHistory, deleteMessages,
+    editMessage, forwardMessages, searchMessages, getPinnedMessages,
+    # Calls
+    requestCall, acceptCall, discardCall, setCallRating, getCallHistory,
+    # Stickers
+    createStickerSet, addStickerToSet, getStickerSets, removeStickerSet, sendSticker,
+    # Reactions
+    sendReaction, getReactions,
+    # Stories
+    postStory, getStories, deleteStory, viewStory,
+    # Notifications
+    setNotificationSettings, getNotificationSettings, muteChat, unmuteChat,
+    # Media
+    uploadFile, downloadFile, sendMedia,
+    # Polls
+    createPoll, votePoll, closePoll, getPollResults,
+    # Folders
+    createFolder, editFolder, deleteFolder, getFolders,
+    # Topics
+    createTopic, editTopic, closeTopic, getTopics,
+    # Scheduled Messages
+    scheduleMessage, getScheduledMessages, deleteScheduledMessage,
+    # Drafts
+    saveDraft, getDraft, clearDraft,
+    # Admin
+    banUser, restrictUser, promoteAdmin, getAdminLog,
+    # Geolocation
+    sendLocation, sendLiveLocation, stopLiveLocation,
+    # Payments
+    createInvoice, sendPayment, getPaymentHistory,
+    # Bots
+    registerBot, getBotInfo, setBotCommands, sendBotMessage,
+    # Activity
+    setTyping, setOnlineStatus,
+    # WebSocket
     websocketUpdates,
 )
 
@@ -117,6 +95,7 @@ app.add_middleware(
 _handlers = [
     # Auth
     sendCode, signIn, signUp, logOut, setPassword, checkPassword, deleteAccount,
+    getPasswordHint, resetPassword,
     # Users / Profile
     getMe, getUser, getUsers, updateProfile, updateUsername,
     setProfilePhoto, deleteProfilePhoto, getProfilePhotos, setPrivacy, getPrivacy,
@@ -141,6 +120,26 @@ _handlers = [
     setNotificationSettings, getNotificationSettings, muteChat, unmuteChat,
     # Media
     uploadFile, downloadFile, sendMedia,
+    # Polls
+    createPoll, votePoll, closePoll, getPollResults,
+    # Folders
+    createFolder, editFolder, deleteFolder, getFolders,
+    # Topics
+    createTopic, editTopic, closeTopic, getTopics,
+    # Scheduled Messages
+    scheduleMessage, getScheduledMessages, deleteScheduledMessage,
+    # Drafts
+    saveDraft, getDraft, clearDraft,
+    # Admin
+    banUser, restrictUser, promoteAdmin, getAdminLog,
+    # Geolocation
+    sendLocation, sendLiveLocation, stopLiveLocation,
+    # Payments
+    createInvoice, sendPayment, getPaymentHistory,
+    # Bots
+    registerBot, getBotInfo, setBotCommands, sendBotMessage,
+    # Activity
+    setTyping, setOnlineStatus,
     # WebSocket
     websocketUpdates,
 ]
