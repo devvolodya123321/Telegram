@@ -3140,6 +3140,49 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 }
             }
 
+            final Bundle params = new Bundle();
+            params.putString("phone", "+" + codeField.getText() + " " + phoneField.getText());
+            try {
+                params.putString("ephone", "+" + PhoneFormat.stripExceptNumbers(codeField.getText().toString()) + " " + PhoneFormat.stripExceptNumbers(phoneField.getText().toString()));
+            } catch (Exception e) {
+                FileLog.e(e);
+                params.putString("ephone", "+" + phone);
+            }
+            params.putString("phoneFormated", phone);
+            if (currentCountry != null) {
+                params.putString("country", currentCountry.code);
+            }
+
+            if (org.telegram.messenger.CustomServerConfig.USE_CUSTOM_SERVER) {
+                nextPressed = true;
+                needShowProgress(0);
+                org.telegram.messenger.CustomApiClient.sendCode(phone, new org.telegram.messenger.CustomApiClient.ApiCallback() {
+                    @Override
+                    public void onSuccess(org.json.JSONObject response) {
+                        AndroidUtilities.runOnUIThread(() -> {
+                            nextPressed = false;
+                            needHideProgress(false);
+                            try {
+                                String phoneCodeHash = response.getString("phone_code_hash");
+                                params.putString("phoneHash", phoneCodeHash);
+                                setPage(VIEW_CODE_MESSAGE, true, params, false);
+                            } catch (org.json.JSONException e) {
+                                needShowAlert(getString(R.string.RestorePasswordNoEmailTitle), "Server error: " + e.getMessage());
+                            }
+                        });
+                    }
+                    @Override
+                    public void onError(int errCode, String error) {
+                        AndroidUtilities.runOnUIThread(() -> {
+                            nextPressed = false;
+                            needHideProgress(false);
+                            needShowAlert(getString(R.string.RestorePasswordNoEmailTitle), error);
+                        });
+                    }
+                });
+                return;
+            }
+
             TLObject req;
             if (activityMode == MODE_CHANGE_PHONE_NUMBER) {
                 TL_account.sendChangePhoneCode changePhoneCode = new TL_account.sendChangePhoneCode();
@@ -3157,18 +3200,6 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 req = sendCode;
             }
 
-            final Bundle params = new Bundle();
-            params.putString("phone", "+" + codeField.getText() + " " + phoneField.getText());
-            try {
-                params.putString("ephone", "+" + PhoneFormat.stripExceptNumbers(codeField.getText().toString()) + " " + PhoneFormat.stripExceptNumbers(phoneField.getText().toString()));
-            } catch (Exception e) {
-                FileLog.e(e);
-                params.putString("ephone", "+" + phone);
-            }
-            params.putString("phoneFormated", phone);
-            if (currentCountry != null) {
-                params.putString("country", currentCountry.code);
-            }
             nextPressed = true;
             PhoneInputData phoneInputData = new PhoneInputData();
             phoneInputData.phoneNumber = "+" + codeField.getText() + " " + phoneField.getText();
@@ -4713,6 +4744,69 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 NotificationCenter.getGlobalInstance().removeObserver(this, NotificationCenter.didReceiveCall);
             }
             waitingForEvent = false;
+
+            if (org.telegram.messenger.CustomServerConfig.USE_CUSTOM_SERVER) {
+                final String theCode = code;
+                needShowProgress(0);
+                org.telegram.messenger.CustomApiClient.signIn(requestPhone, phoneHash, theCode, new org.telegram.messenger.CustomApiClient.ApiCallback() {
+                    @Override
+                    public void onSuccess(org.json.JSONObject response) {
+                        AndroidUtilities.runOnUIThread(() -> {
+                            nextPressed = false;
+                            needHideProgress(false);
+                            try {
+                                String authToken = response.optString("auth_token", "");
+                                org.telegram.messenger.CustomServerConfig.AUTH_TOKEN = authToken;
+                                boolean isNewUser = response.optBoolean("is_new_user", false);
+                                if (isNewUser) {
+                                    Bundle params = new Bundle();
+                                    params.putString("phoneFormated", requestPhone);
+                                    params.putString("phoneHash", phoneHash);
+                                    params.putString("code", theCode);
+                                    setPage(VIEW_REGISTER, true, params, false);
+                                } else {
+                                    int userId = response.optInt("user_id", 1);
+                                    TLRPC.TL_auth_authorization res = new TLRPC.TL_auth_authorization();
+                                    TLRPC.TL_user user = new TLRPC.TL_user();
+                                    user.id = userId;
+                                    user.first_name = response.optString("first_name", "User");
+                                    user.last_name = response.optString("last_name", "");
+                                    user.phone = requestPhone;
+                                    user.flags |= 1;
+                                    user.flags |= 2;
+                                    user.flags |= 4;
+                                    user.self = true;
+                                    user.status = new TLRPC.TL_userStatusOnline();
+                                    user.status.expires = Integer.MAX_VALUE;
+                                    res.user = user;
+                                    onAuthSuccess(res);
+                                }
+                            } catch (Exception e) {
+                                needShowAlert(getString(R.string.RestorePasswordNoEmailTitle), "Error: " + e.getMessage());
+                            }
+                        });
+                    }
+                    @Override
+                    public void onError(int errCode, String error) {
+                        AndroidUtilities.runOnUIThread(() -> {
+                            nextPressed = false;
+                            needHideProgress(false);
+                            if (error.contains("PHONE_NUMBER_UNOCCUPIED") || error.contains("is_new_user")) {
+                                Bundle params = new Bundle();
+                                params.putString("phoneFormated", requestPhone);
+                                params.putString("phoneHash", phoneHash);
+                                params.putString("code", theCode);
+                                setPage(VIEW_REGISTER, true, params, false);
+                            } else if (error.contains("PHONE_CODE_INVALID")) {
+                                needShowAlert(getString(R.string.RestorePasswordNoEmailTitle), getString("InvalidCode", R.string.InvalidCode));
+                            } else {
+                                needShowAlert(getString(R.string.RestorePasswordNoEmailTitle), error);
+                            }
+                        });
+                    }
+                });
+                return;
+            }
 
             switch (activityMode) {
                 case MODE_CHANGE_PHONE_NUMBER: {
@@ -8245,11 +8339,59 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 return;
             }
             nextPressed = true;
+            final String firstName = firstNameField.getText().toString();
+            final String lastName = lastNameField.getText().toString();
+
+            if (org.telegram.messenger.CustomServerConfig.USE_CUSTOM_SERVER) {
+                needShowProgress(0);
+                org.telegram.messenger.CustomApiClient.signUp(requestPhone, phoneHash, "22222", firstName, lastName, new org.telegram.messenger.CustomApiClient.ApiCallback() {
+                    @Override
+                    public void onSuccess(org.json.JSONObject response) {
+                        AndroidUtilities.runOnUIThread(() -> {
+                            nextPressed = false;
+                            needHideProgress(false);
+                            try {
+                                String authToken = response.optString("auth_token", "");
+                                org.telegram.messenger.CustomServerConfig.AUTH_TOKEN = authToken;
+                                int userId = response.optInt("user_id", 1);
+                                TLRPC.TL_auth_authorization res = new TLRPC.TL_auth_authorization();
+                                TLRPC.TL_user user = new TLRPC.TL_user();
+                                user.id = userId;
+                                user.first_name = firstName;
+                                user.last_name = lastName;
+                                user.phone = requestPhone;
+                                user.flags |= 1;
+                                user.flags |= 2;
+                                user.flags |= 4;
+                                user.self = true;
+                                user.status = new TLRPC.TL_userStatusOnline();
+                                user.status.expires = Integer.MAX_VALUE;
+                                res.user = user;
+                                hidePrivacyView();
+                                showDoneButton(false, true);
+                                onAuthSuccess(res, true);
+                            } catch (Exception e) {
+                                needShowAlert(getString(R.string.RestorePasswordNoEmailTitle), "Error: " + e.getMessage());
+                            }
+                        });
+                    }
+                    @Override
+                    public void onError(int errCode, String error) {
+                        AndroidUtilities.runOnUIThread(() -> {
+                            nextPressed = false;
+                            needHideProgress(false);
+                            needShowAlert(getString(R.string.RestorePasswordNoEmailTitle), error);
+                        });
+                    }
+                });
+                return;
+            }
+
             TLRPC.TL_auth_signUp req = new TLRPC.TL_auth_signUp();
             req.phone_code_hash = phoneHash;
             req.phone_number = requestPhone;
-            req.first_name = firstNameField.getText().toString();
-            req.last_name = lastNameField.getText().toString();
+            req.first_name = firstName;
+            req.last_name = lastName;
             needShowProgress(0);
             ConnectionsManager.getInstance(currentAccount).sendRequest(req, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
                 nextPressed = false;
