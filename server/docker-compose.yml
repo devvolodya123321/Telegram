@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  messenger-server:
+    build: .
+    ports:
+      - "8443:8443"
+    environment:
+      - SECRET_KEY=change-me-in-production
+      - DEBUG=false
+    volumes:
+      - ./data:/app/data
+      - ./media:/app/media
+    restart: unless-stopped
